@@ -1,0 +1,11 @@
+langgraph
+langchain
+langchain-openai
+openai
+pandas
+scipy
+duckdb
+sqlglot
+pydantic
+python-dotenv
+requests
