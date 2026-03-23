@@ -4,6 +4,7 @@ import json
 from app.config import settings
 from app.llm.client import call_json_llm
 from app.llm.prompts import SQL_INTENT_PROMPT, SQL_GENERATOR_PROMPT
+from app.llm.prompt_utils import render_prompt
 from app.tools.sql_tools import (
     get_schema,
     generate_sql_rule,
@@ -14,21 +15,25 @@ from app.tools.analysis_tools import ensure_demo_data
 
 
 def try_llm_sql(user_query: str, business_context: str, schema: str):
+    intent_prompt = render_prompt(
+        SQL_INTENT_PROMPT,
+        schema=schema,
+        business_context=business_context,
+        user_query=user_query,
+    )
     intent = call_json_llm(
         system_prompt="你是一个严谨的数据分析 SQL 规划器，只输出 JSON。",
-        user_prompt=SQL_INTENT_PROMPT.format(
-            schema=schema,
-            business_context=business_context,
-            user_query=user_query,
-        ),
+        user_prompt=intent_prompt,
     )
 
+    generator_prompt = render_prompt(
+        SQL_GENERATOR_PROMPT,
+        schema=schema,
+        intent_json=json.dumps(intent, ensure_ascii=False),
+    )
     sql_resp = call_json_llm(
         system_prompt="你是一个严谨的 DuckDB SQL 生成器，只输出 JSON。",
-        user_prompt=SQL_GENERATOR_PROMPT.format(
-            schema=schema,
-            intent_json=json.dumps(intent, ensure_ascii=False),
-        ),
+        user_prompt=generator_prompt,
     )
 
     sql = str(sql_resp.get("sql", "")).strip()

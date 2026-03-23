@@ -3,6 +3,7 @@ from typing import Dict, Any
 from app.config import settings
 from app.llm.client import call_json_llm
 from app.llm.prompts import ROUTER_PROMPT, PLANNER_PROMPT
+from app.llm.prompt_utils import render_prompt
 
 
 def rule_route(user_query: str) -> str:
@@ -37,12 +38,14 @@ def llm_route(user_query: str) -> str:
 
 
 def llm_plan(user_query: str, task_type: str) -> str:
+    prompt = render_prompt(
+        PLANNER_PROMPT,
+        user_query=user_query,
+        task_type=task_type,
+    )
     result = call_json_llm(
-        system_prompt="你是一个严谨的数据分析规划器，只输出合法 JSON。",
-        user_prompt=PLANNER_PROMPT.format(
-            user_query=user_query,
-            task_type=task_type,
-        ),
+        system_prompt="你是一个严谨的数据分析规划器，只输出 JSON。",
+        user_prompt=prompt,
     )
     return str(result.get("plan", "系统已生成分析计划。")).strip()
 

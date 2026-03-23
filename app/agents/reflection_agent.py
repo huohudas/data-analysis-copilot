@@ -3,6 +3,7 @@ from typing import Dict, Any
 from app.config import settings
 from app.llm.client import call_json_llm
 from app.llm.prompts import REFLECTION_PROMPT
+from app.llm.prompt_utils import render_prompt
 
 
 def rule_reflection(user_query: str, task_type: str, analysis_result: str) -> Dict[str, Any]:
@@ -56,13 +57,15 @@ def run_reflection_agent(
 ) -> Dict[str, Any]:
     if settings.llm_enabled:
         try:
+            prompt = render_prompt(
+                REFLECTION_PROMPT,
+                user_query=user_query,
+                task_type=task_type,
+                analysis_result=analysis_result,
+            )
             result = call_json_llm(
                 system_prompt="你是一个严谨的分析结果复核器，只输出 JSON。",
-                user_prompt=REFLECTION_PROMPT.format(
-                    user_query=user_query,
-                    task_type=task_type,
-                    analysis_result=analysis_result,
-                ),
+                user_prompt=prompt,
             )
             return {
                 "user_query": user_query,

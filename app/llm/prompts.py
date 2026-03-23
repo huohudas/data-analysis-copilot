@@ -19,17 +19,18 @@ PLANNER_PROMPT = """
 你是一个数据分析任务规划器。
 请根据用户问题和任务类型，输出一个简短执行计划。
 
-要求：
-1. 使用中文
-2. 只输出合法 JSON
-3. 格式固定：
+强约束：
+1. 你必须只输出一个完整 JSON 对象
+2. 不允许输出 JSON 之外的任何文字
+3. 不允许省略最外层大括号 {}
+4. 返回格式只能是：
 {"plan":"......"}
 
 用户问题：
-{user_query}
+__USER_QUERY__
 
 任务类型：
-{task_type}
+__TASK_TYPE__
 """.strip()
 
 
@@ -37,7 +38,12 @@ SQL_INTENT_PROMPT = """
 你是一个数据分析 SQL 规划器。
 请根据用户问题、表结构和业务上下文，输出结构化查询意图。
 
-只能输出合法 JSON，格式如下：
+强约束：
+1. 只能输出一个完整 JSON 对象
+2. 不允许输出解释文字
+3. 不允许省略最外层大括号 {}
+4. 只允许使用下面这个格式：
+
 {
   "analysis_type": "summary | by_channel | by_date | by_date_channel",
   "metrics": ["orders", "revenue", "users", "conversion_rate"],
@@ -49,13 +55,13 @@ SQL_INTENT_PROMPT = """
 }
 
 表结构：
-{schema}
+__SCHEMA__
 
 业务上下文：
-{business_context}
+__BUSINESS_CONTEXT__
 
 用户问题：
-{user_query}
+__USER_QUERY__
 """.strip()
 
 
@@ -63,30 +69,38 @@ SQL_GENERATOR_PROMPT = """
 你是一个 DuckDB SQL 生成器。
 请基于给定查询意图生成 SQL。
 
-要求：
+强约束：
 1. 只能查询 orders 表
 2. 只能生成 SELECT
 3. 禁止 INSERT / UPDATE / DELETE / DROP / ALTER
-4. 只能输出合法 JSON：
+4. 不能输出解释文字
+5. 只能输出一个完整 JSON 对象
+6. 返回格式只能是：
 {"sql":"SELECT ..."}
 
 表结构：
-{schema}
+__SCHEMA__
 
 查询意图：
-{intent_json}
+__INTENT_JSON__
+""".strip()
+
+
+FUNNEL_AGENT_PROMPT = """
+你是 Funnel 分析 Agent。
+你的职责是计算每个漏斗环节的转化率、整体转化率和主要流失点。
 """.strip()
 
 
 REFLECTION_PROMPT = """
 你是一个分析结果复核器。
-请检查结果是否：
-1. 不为空
-2. 与任务类型匹配
-3. 没有脱离数据证据
-4. 适合作为最终输出
 
-只输出合法 JSON：
+强约束：
+1. 你必须只输出一个完整 JSON 对象
+2. 不允许输出 JSON 之外的任何文字
+3. 不允许省略最外层大括号 {}
+4. 返回格式只能是：
+
 {
   "passed": true,
   "needs_retry": false,
@@ -95,11 +109,11 @@ REFLECTION_PROMPT = """
 }
 
 用户问题：
-{user_query}
+__USER_QUERY__
 
 任务类型：
-{task_type}
+__TASK_TYPE__
 
 分析结果：
-{analysis_result}
+__ANALYSIS_RESULT__
 """.strip()

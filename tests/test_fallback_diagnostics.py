@@ -1,5 +1,6 @@
 import traceback
 from pprint import pprint
+import json
 
 from app.config import settings
 from app.llm.client import call_json_llm
@@ -10,6 +11,7 @@ from app.llm.prompts import (
     SQL_GENERATOR_PROMPT,
     REFLECTION_PROMPT,
 )
+from app.llm.prompt_utils import render_prompt
 from app.tools.sql_tools import get_schema
 from app.graph.builder import build_graph
 
@@ -38,7 +40,8 @@ def test_router(query: str):
 def test_planner(query: str, task_type: str):
     print_header("2) TEST PLANNER")
     try:
-        prompt = PLANNER_PROMPT.format(
+        prompt = render_prompt(
+            PLANNER_PROMPT,
             user_query=query,
             task_type=task_type,
         )
@@ -61,7 +64,8 @@ def test_sql_intent(query: str, business_context: str):
     print_header("3) TEST SQL INTENT")
     try:
         schema = get_schema()
-        prompt = SQL_INTENT_PROMPT.format(
+        prompt = render_prompt(
+            SQL_INTENT_PROMPT,
             schema=schema,
             business_context=business_context,
             user_query=query,
@@ -90,9 +94,9 @@ def test_sql_generator(intent_obj):
         return
 
     try:
-        import json
         schema = get_schema()
-        prompt = SQL_GENERATOR_PROMPT.format(
+        prompt = render_prompt(
+            SQL_GENERATOR_PROMPT,
             schema=schema,
             intent_json=json.dumps(intent_obj, ensure_ascii=False),
         )
@@ -114,7 +118,8 @@ def test_sql_generator(intent_obj):
 def test_reflection(query: str, task_type: str, analysis_result: str):
     print_header("5) TEST REFLECTION")
     try:
-        prompt = REFLECTION_PROMPT.format(
+        prompt = render_prompt(
+            REFLECTION_PROMPT,
             user_query=query,
             task_type=task_type,
             analysis_result=analysis_result,
